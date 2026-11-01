@@ -1,79 +1,18 @@
 (() => {
   'use strict';
 
-  const SHEET_ID = '19V2V1viJb56T9SEHa2_kY4-MIb7Ojdo8juRjQgqpk9E';
-  const SHEET_TIMEOUT_MS = 4000;
-  const FALLBACK_URL = 'data/content.json';
+  const CONTENT_URL = 'data/content.json';
   const GTM_ID = 'GTM-P5QJLX5D';
   const GTM_HOST = 'urbansportsbase.com'; // 本番ドメイン以外では計測しない
 
-  const LIST_TABS = {
-    worries: 'お悩み',
-    genres: 'ジャンル',
-    reasons: '選ばれる理由',
-    stats: '実績',
-    schedule: '体験スケジュール',
-    info: '体験概要',
-    flow: '流れ',
-    voices: '保護者の声',
-    faq: 'よくある質問',
-  };
   const DAY_COLORS = ['blue', 'purple', 'pink', 'yellow', 'coral', 'deep'];
 
   // ---------- データ取得 ----------
 
-  function parseCsv(text) {
-    const rows = [];
-    let row = [], cell = '', quoted = false;
-    for (let i = 0; i < text.length; i++) {
-      const c = text[i];
-      if (quoted) {
-        if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
-        else if (c === '"') quoted = false;
-        else cell += c;
-      } else if (c === '"') quoted = true;
-      else if (c === ',') { row.push(cell); cell = ''; }
-      else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
-      else if (c !== '\r') cell += c;
-    }
-    if (cell || row.length) { row.push(cell); rows.push(row); }
-    return rows;
-  }
-
-  async function fetchTab(name, signal) {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(name)}`;
-    const res = await fetch(url, { signal });
-    if (!res.ok) throw new Error(`${name}: ${res.status}`);
-    const [header, ...rows] = parseCsv(await res.text());
-    return rows.map(r => Object.fromEntries(header.map((h, i) => [h.trim(), (r[i] || '').trim()])));
-  }
-
-  async function loadFromSheet() {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), SHEET_TIMEOUT_MS);
-    try {
-      const keys = Object.keys(LIST_TABS);
-      const [settings, ...lists] = await Promise.all([
-        fetchTab('基本設定', ctrl.signal),
-        ...keys.map(k => fetchTab(LIST_TABS[k], ctrl.signal)),
-      ]);
-      const data = { settings: Object.fromEntries(settings.map(r => [r['項目'], r['内容']])) };
-      keys.forEach((k, i) => { data[k] = lists[i]; });
-      if (!data.settings['ヒーロー見出し']) throw new Error('基本設定が読み取れません');
-      return data;
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
   async function loadData() {
-    try {
-      return await loadFromSheet();
-    } catch (err) {
-      console.warn('スプレッドシートを読めなかったため控えのデータで表示します', err);
-      const res = await fetch(FALLBACK_URL);
-      return res.json();
-    }
+    const res = await fetch(CONTENT_URL, { cache: 'no-cache' });
+    if (!res.ok) throw new Error(`${CONTENT_URL}: ${res.status}`);
+    return res.json();
   }
 
   const visible = rows => rows.filter(r => String(r['表示']).toUpperCase() !== 'FALSE');
