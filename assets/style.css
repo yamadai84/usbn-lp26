@@ -34,7 +34,7 @@ body {
   overflow-wrap: anywhere; /* シートに長い英数字やURLが入っても枠からはみ出さない */
   overflow-x: clip;
 }
-h1, h2, h3, .sec-ja, .solve, .hero-lead, .campaign-title, .worry-text p, .studio-msg, .stat-label, .trial-lead { word-break: auto-phrase; }
+h1, h2, h3, .sec-ja, .solve, .hero-lead, .campaign-title, .worry-text p, .studio-msg, .stat-label, .trial-lead, .apply-lead, .f-hint, .apply-done p { word-break: auto-phrase; }
 img { display: block; max-width: 100%; height: auto; }
 img[hidden], [hidden] { display: none !important; }
 h1, h2, h3, p, ul, ol, dl, dd { margin: 0; padding: 0; }
@@ -173,12 +173,91 @@ mark { color: inherit; background: linear-gradient(transparent 58%, var(--yellow
 .info a { text-underline-offset: 3px; }
 .info a .material-symbols-outlined { margin-left: 4px; font-size: 16px; vertical-align: -2px; }
 
+/* ジャンルの色（レッスンスケジュールのチラシと同じ系統） */
+.g-dd { --g: #e53935; --g-tint: #fdecec; }
+.g-dance { --g: #1e9bb3; --g-tint: #e5f4f7; }
+.g-acro { --g: #4f9a3a; --g-tint: #edf6e9; }
+.g-other { --g: var(--muted); --g-tint: #f3f3f3; }
+.genre-dot { display: inline-block; width: 10px; height: 10px; margin-right: 8px; background: var(--g); vertical-align: 1px; }
+
 /* ---------- 流れ ---------- */
 .flow-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .step { position: relative; padding: clamp(24px, 3vw, 32px); background: var(--white); }
 .step-no { display: inline-flex; align-items: baseline; gap: 6px; font-family: var(--en); font-size: 38px; line-height: 1.1; color: var(--coral); }
 .step-no small { font-size: 16px; letter-spacing: .08em; }
 .step h3 { margin: 8px 0; font-size: 19px; font-weight: 900; line-height: 1.5; }
+
+/* ---------- 申込フォーム ---------- */
+.sec-apply { background: var(--deep); color: var(--ink); }
+.sec-apply .sec-head { color: var(--white); }
+.apply-card { padding: clamp(20px, 4vw, 48px); background: var(--white); }
+.apply-lead { margin-bottom: 28px; text-align: center; font-weight: 500; }
+.f-block { min-width: 0; margin: 0 0 36px; padding: 0; border: 0; }
+.f-block legend { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; padding: 0; font-size: 19px; font-weight: 900; line-height: 1.4; }
+.f-no { display: inline-grid; place-items: center; width: 32px; height: 32px; background: var(--ink); color: var(--white); font-family: var(--en); font-size: 18px; line-height: 1; }
+.req, .opt { display: inline-block; margin-left: 8px; padding: 1px 8px; background: var(--coral); color: var(--white); font-size: 11px; font-weight: 700; line-height: 1.7; letter-spacing: .05em; vertical-align: 2px; }
+.opt { background: var(--muted); }
+.f-block legend .req, .f-block legend .opt { margin-left: 0; }
+.f-hint { margin-bottom: 14px; color: var(--ink-soft); font-size: 14px; line-height: 1.7; }
+.f-empty { padding: 14px; background: var(--gray); color: var(--muted); font-size: 14px; }
+
+/* 選択肢は input を見えなくして、隣の見た目で状態を出す */
+.cls input, .date input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.cls-days { display: grid; gap: 12px; }
+.cls-day { display: grid; grid-template-columns: 72px 1fr; gap: 10px; align-items: start; }
+.cls-day-name { padding: 8px 0; background: var(--ink); color: var(--white); font-size: 14px; font-weight: 700; text-align: center; }
+.cls-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; }
+.cls { position: relative; display: flex; cursor: pointer; }
+.cls-body { flex: 1; display: grid; align-content: center; gap: 2px; min-height: 60px; padding: 8px 44px 8px 12px; border: 2px solid var(--line); border-left: 6px solid var(--g); background: var(--white); transition: background .15s ease, border-color .15s ease; }
+.cls-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; }
+.cls-genre { padding: 0 8px; background: var(--g-tint); color: var(--g); font-size: 11px; font-weight: 700; line-height: 1.7; }
+.cls-name { font-weight: 700; line-height: 1.4; }
+.cls-time { color: var(--ink-soft); font-family: var(--en); font-size: 16px; line-height: 1.3; }
+.cls-check { position: absolute; top: 50%; right: 12px; display: grid; place-items: center; width: 24px; height: 24px; border: 2px solid var(--line); color: transparent; font-size: 18px; transform: translateY(-50%); }
+.cls input:checked ~ .cls-body { border-color: var(--g); background: var(--g-tint); }
+.cls input:checked ~ .cls-check { border-color: var(--g); background: var(--g); color: var(--white); }
+.cls input:focus-visible ~ .cls-body, .date input:focus-visible + span { outline: 3px solid var(--deep); outline-offset: 2px; }
+.f-fee { margin-top: 12px; padding: 10px 14px; background: #fff6cc; font-size: 14px; font-weight: 500; }
+
+.pick { margin-bottom: 10px; padding: 12px 14px 14px; border-left: 6px solid var(--g); background: var(--g-tint); }
+.pick-title { margin-bottom: 8px; font-weight: 700; line-height: 1.5; }
+.pick-title span { display: inline-block; white-space: nowrap; margin-left: .6em; color: var(--ink-soft); font-family: var(--en); font-size: 16px; }
+.date-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.date { position: relative; cursor: pointer; }
+.date span { display: block; min-width: 92px; padding: 8px 14px; border: 2px solid var(--line); background: var(--white); font-weight: 700; text-align: center; transition: background .15s ease; }
+.date input:checked + span { border-color: var(--g); background: var(--g); color: var(--white); }
+
+.f-field { margin-bottom: 18px; }
+.f-field label { display: block; margin-bottom: 6px; font-weight: 700; }
+.apply-form input[type="text"], .apply-form input[type="tel"], .apply-form input[type="email"], .apply-form textarea {
+  width: 100%; padding: 12px 14px; border: 2px solid var(--line); background: #fafafa;
+  color: var(--ink); font: inherit; font-size: 16px; line-height: 1.6; letter-spacing: .03em;
+}
+.apply-form input:focus, .apply-form textarea:focus { border-color: var(--deep); background: var(--white); outline: none; box-shadow: 0 0 0 3px rgba(23, 84, 141, .15); }
+.apply-form [aria-invalid="true"] { border-color: #d32f2f; background: #fff5f5; }
+.apply-form textarea { resize: vertical; }
+.f-note { margin-top: 4px; color: var(--muted); font-size: 13px; }
+.f-error { margin-top: 6px; color: #d32f2f; font-size: 14px; font-weight: 700; }
+.f-error:empty { display: none; }
+.f-hp { position: absolute; left: -9999px; }
+.f-agree { margin-bottom: 20px; text-align: center; }
+.f-check { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; cursor: pointer; }
+.f-check input { flex: none; display: grid; place-items: center; width: 22px; height: 22px; margin: 0; border: 2px solid var(--ink-soft); background: var(--white); appearance: none; cursor: pointer; }
+.f-check input:checked { border-color: var(--deep); background: var(--deep); }
+.f-check input:checked::after { content: ''; width: 6px; height: 11px; margin-top: -2px; border: solid var(--white); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.f-check input:focus-visible { outline: 3px solid var(--deep); outline-offset: 2px; }
+.f-policy { margin-top: 4px; font-size: 13px; }
+.f-policy a { color: var(--ink-soft); text-underline-offset: 3px; }
+.f-submit-error { margin-bottom: 14px; text-align: center; }
+.f-submit { min-width: min(100%, 360px); border: 1px solid var(--ink); cursor: pointer; font-family: inherit; }
+.f-submit:disabled { opacity: .6; cursor: wait; transform: none; }
+
+.apply-done { padding: 16px 0; text-align: center; outline: none; }
+.done-icon { color: #4f9a3a; font-size: 64px; }
+.done-title { margin: 8px 0 12px; font-size: clamp(20px, 2.6vw, 24px); font-weight: 900; }
+.done-sum { max-width: 520px; margin: 24px auto 0; border-top: 1px solid var(--line); text-align: left; }
+.done-sum > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+.done-sum dt { font-weight: 700; }
 
 /* ---------- 声 ---------- */
 .voice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
@@ -216,6 +295,7 @@ mark { color: inherit; background: linear-gradient(transparent 58%, var(--yellow
 
 /* ---------- スマホ固定ボタン ---------- */
 .sp-cta { display: none; }
+body.in-apply .sp-cta { visibility: hidden; }
 
 /* ---------- 読み込み ---------- */
 .loading { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 60vh; color: var(--muted); }
@@ -251,6 +331,10 @@ mark { color: inherit; background: linear-gradient(transparent 58%, var(--yellow
   .day-grid { grid-template-columns: 1fr; }
   .info > div { grid-template-columns: 1fr; gap: 2px; }
   .voice { grid-template-columns: 56px 1fr; gap: 12px; }
+  .cls-day { grid-template-columns: 1fr; gap: 6px; }
+  .cls-day-name { justify-self: start; padding: 2px 14px; }
+  .cls-list { grid-template-columns: 1fr; }
+  .done-sum > div { grid-template-columns: 1fr; gap: 0; }
   .voice-img { width: 56px; height: 56px; }
   .sp-cta {
     display: block; position: fixed; inset: auto 0 0; z-index: 40;

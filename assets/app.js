@@ -6,6 +6,7 @@
   const GTM_HOST = 'urbansportsbase.com'; // 本番ドメイン以外では計測しない
 
   const DAY_COLORS = ['blue', 'purple', 'pink', 'yellow', 'coral', 'deep'];
+  const GENRE_DOT = { 'ダブルダッチ': 'g-dd', 'ダンス': 'g-dance', 'アクロバット': 'g-acro' };
 
   // ---------- データ取得 ----------
 
@@ -178,7 +179,7 @@
         ${days.length ? `<div class="day-grid">
           ${days.map((d, i) => `<article class="day day-${DAY_COLORS[i % DAY_COLORS.length]}">
             <h3>${esc(d.name)}</h3>
-            <ul>${d.items.map(r => `<li><span class="day-class">${esc(r['クラス'])}</span><span class="day-time" lang="en">${esc(r['時間'])}</span></li>`).join('')}</ul>
+            <ul>${d.items.map(r => `<li><span class="day-class">${r['ジャンル'] ? `<span class="genre-dot ${GENRE_DOT[r['ジャンル']] || 'g-other'}" title="${esc(r['ジャンル'])}"></span>` : ''}${esc(r['クラス'])}</span><span class="day-time" lang="en">${esc(r['時間'])}</span></li>`).join('')}</ul>
           </article>`).join('')}
         </div>` : ''}
         ${img(s['スケジュール補足画像URL'], '体験レッスンスケジュール', 'class="flyer"')}
@@ -281,9 +282,12 @@
     }
   }
 
+  // ページ内フォームがあればそこへ、なければ外部フォーム、どちらもなければ体験概要へ
   function applyCtas(s) {
+    const inPage = document.getElementById('apply');
     const form = safeUrl(s['申込フォームURL']);
     document.querySelectorAll('.js-cta').forEach(a => {
+      if (inPage) { a.href = '#apply'; return; }
       if (!form) return;
       a.href = form;
       a.target = '_blank';
@@ -315,9 +319,11 @@
       flow(s, visible(data.flow)),
       voices(s, visible(data.voices)),
       faq(s, visible(data.faq)),
+      window.UsbnApply ? window.UsbnApply.render(s, visible(data.schedule)) : '',
       closing(s),
       footer(s),
     ].join('');
+    if (window.UsbnApply) window.UsbnApply.mount();
     applyCtas(s);
     document.body.classList.add('ready');
 
