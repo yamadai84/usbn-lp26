@@ -23,23 +23,51 @@ window.UsbnApply = (() => {
     return i < 0 ? null : i;
   }
 
-  // 「2026/12/29, 12/30」のような休講日の書き方を ISO 日付の集合にする
+  // 「12/29, 12/30」「12/27〜1/4」のような休講日の書き方を ISO 日付の集合にする
   function parseHolidays(text, today) {
     const set = new Set();
-    toHalf(text).split(/[,、\s]+/).forEach(part => {
+    const toDate = (part, after) => {
       const m = part.match(/^(?:(\d{4})[/-])?(\d{1,2})[/-](\d{1,2})$/);
-      if (!m) return;
-      let y = m[1] ? Number(m[1]) : today.getFullYear();
-      const d = new Date(y, Number(m[2]) - 1, Number(m[3]));
-      if (!m[1] && d < today) d.setFullYear(y + 1);
-      set.add(iso(d));
+      if (!m) return null;
+      const d = new Date(m[1] ? Number(m[1]) : today.getFullYear(), Number(m[2]) - 1, Number(m[3]));
+      // 年を省いた日付は、基準日より前なら翌年として扱う
+      if (!m[1] && d < after) d.setFullYear(d.getFullYear() + 1);
+      return d;
+    };
+    toHalf(text).replace(/\s*[〜~]\s*/g, '~').split(/[,、\s]+/).forEach(part => {
+      const [a, b] = part.split('~');
+      const start = toDate(a, today);
+      if (!start) return;
+      const end = b ? toDate(b, start) : start;
+      if (!end) return;
+      for (const d = new Date(start); d <= end && set.size < 400; d.setDate(d.getDate() + 1)) set.add(iso(d));
     });
     return set;
   }
 
-  function datesFor(weekday, s) {
+  // 体験スケジュールの開始日・終了日（例：2027/4/1）。空欄は期限なし
+  function parseDate(text) {
+    const m = toHalf(text).trim().match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+    return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+  }
+
+  function inPeriod(row, d) {
+    const start = parseDate(row['開始日']);
+    const end = parseDate(row['終了日']);
+    return (!start || d >= start) && (!end || d <= end);
+  }
+
+  function startOfToday() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    return today;
+  }
+
+  // 今日の時点で行われているクラスか（スケジュール表の表示に使う）
+  const isCurrent = row => inPeriod(row, startOfToday());
+
+  function datesFor(cls, s) {
+    const today = startOfToday();
     const from = Number(toHalf(s['最短の体験日（何日後から）'])) || 1;
     const range = Number(toHalf(s['受付期間（日数）'])) || 28;
     const holidays = parseHolidays(s['休講日'], today);
@@ -47,20 +75,21 @@ window.UsbnApply = (() => {
     for (let i = from; i <= range && out.length < MAX_DATES; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
-      if (d.getDay() === weekday && !holidays.has(iso(d))) out.push(d);
+      if (d.getDay() === cls.weekday && inPeriod(cls.row, d) && !holidays.has(iso(d))) out.push(d);
     }
     return out;
   }
 
-  function classes(schedule) {
+  // 今行われているか、受付期間内に始まるクラスだけを選択肢にする
+  function classes(schedule, s) {
     return schedule
-      .map((r, i) => ({ id: String(i), day: r['曜日'], name: r['クラス'], time: r['時間'], genre: r['ジャンル'], weekday: weekdayOf(r['曜日']) }))
-      .filter(c => c.weekday !== null && c.name);
+      .map((r, i) => ({ id: String(i), row: r, day: r['曜日'], name: r['クラス'], time: r['時間'], genre: r['ジャンル'], weekday: weekdayOf(r['曜日']) }))
+      .filter(c => c.weekday !== null && c.name && (isCurrent(c.row) || datesFor(c, s).length));
   }
 
   function render(s, schedule) {
     const url = String(s['申込受付URL'] || '').trim();
-    const list = classes(schedule);
+    const list = classes(schedule, s);
     if (!/^(https:\/\/|http:\/\/localhost[:/])/.test(url) || !list.length) { state = null; return ''; }
     state = { url, s, list, picked: new Map() };
 
@@ -162,7 +191,7 @@ window.UsbnApply = (() => {
       return;
     }
     box.innerHTML = [...state.picked.values()].map(p => {
-      const dates = datesFor(p.cls.weekday, state.s);
+      const dates = datesFor(p.cls, state.s);
       return `<div class="pick ${genreClass(p.cls.genre)}">
         <p class="pick-title">${esc(p.cls.day)}　${esc(p.cls.name)}<span lang="en">${esc(p.cls.time)}</span></p>
         ${dates.length ? `<div class="date-list">
@@ -202,7 +231,7 @@ window.UsbnApply = (() => {
     }
     // 希望日はクラスを選んだ直後に責めないよう、送信時か、エラー表示中だけ確かめる
     if (all || document.getElementById('err-dates').textContent) {
-      const missing = [...state.picked.values()].some(p => datesFor(p.cls.weekday, state.s).length && !p.dates.size);
+      const missing = [...state.picked.values()].some(p => datesFor(p.cls, state.s).length && !p.dates.size);
       check('dates', missing ? '選んだクラスごとに、希望日を1つ以上選んでください。' : '', 'f-dates');
     }
     const name = form.name.value.trim();
@@ -337,5 +366,5 @@ window.UsbnApply = (() => {
     });
   }
 
-  return { render, mount };
+  return { render, mount, isCurrent };
 })();

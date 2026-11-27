@@ -228,12 +228,14 @@ function notify_(entry) {
   }
   if (s['自動返信メール'] === 'する') {
     const sender = s['差出人名'] || 'URBAN SPORTS BASE NAGOYA';
+    // 送信元は Apps Script の持ち主のアドレスになるので、返信だけ差出人アドレスへ届くようにする
+    const replyTo = s['差出人アドレス'] || to;
     MailApp.sendEmail({
       to: entry.email,
       subject: `【${sender}】無料体験レッスンのお申し込みを受け付けました`,
       body: `${entry.name} 様の保護者様\n\n無料体験レッスンにお申し込みいただき、ありがとうございます。\n以下の内容で受け付けました。担当者より、確定日時をメールでご連絡します。\n\n${body}\n\nご不明な点は、このメールにご返信ください。\n\n${sender}`,
       name: sender,
-      ...(to ? { replyTo: to } : {}),
+      ...(replyTo ? { replyTo } : {}),
     });
   }
 }

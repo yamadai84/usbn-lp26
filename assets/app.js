@@ -167,7 +167,8 @@
 
   function trial(s, schedule, info) {
     const days = [];
-    schedule.forEach(r => {
+    const current = window.UsbnApply ? schedule.filter(window.UsbnApply.isCurrent) : schedule;
+    current.forEach(r => {
       let d = days.find(x => x.name === r['曜日']);
       if (!d) days.push(d = { name: r['曜日'], items: [] });
       d.items.push(r);
@@ -248,7 +249,10 @@
     return `<section class="closing">
       <div class="closing-img">${img(s['締め写真URL'], '')}</div>
       <div class="closing-body">
-        ${img(s['ロゴ画像URL（濃い背景用）'], 'DDFAM / URBAN SPORTS BASE', 'class="closing-logo"')}
+        <div class="closing-logos">
+          ${img(s['ロゴ画像URL（濃い背景用）'], 'URBAN SPORTS BASE', 'class="closing-logo"')}
+          ${img(s['DDFAMロゴURL（濃い背景用）'], 'DDFAM', 'class="closing-logo-sub"')}
+        </div>
         <h2>${rich(s['締め見出し'])}</h2>
         <p>${rich(s['締め本文'])}</p>
         ${ctaButton(s)}
@@ -308,6 +312,9 @@
     const logo = document.getElementById('headerLogo');
     const logoSrc = imageUrl(s['ロゴ画像URL']);
     if (logoSrc) { logo.src = logoSrc; logo.hidden = false; }
+    const subLogo = document.getElementById('headerSubLogo');
+    const subLogoSrc = imageUrl(s['DDFAMロゴURL']);
+    if (subLogoSrc) { subLogo.src = subLogoSrc; subLogo.hidden = false; }
 
     document.getElementById('app').innerHTML = [
       hero(s),
